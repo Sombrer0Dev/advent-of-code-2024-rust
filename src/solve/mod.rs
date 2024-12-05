@@ -1,6 +1,8 @@
 pub mod day01;
 pub mod day02;
 pub mod day03;
+pub mod day04;
+pub mod day05;
 pub mod err;
 
 use day01::solve_day1_1;
@@ -9,6 +11,10 @@ use day02::solve_day2_1;
 use day02::solve_day2_2;
 use day03::solve_day3_1;
 use day03::solve_day3_2;
+use day04::solve_day4_1;
+use day04::solve_day4_2;
+use day05::solve_day5_1;
+use day05::solve_day5_2;
 use err::Error;
 use err::Result;
 
@@ -50,6 +56,10 @@ pub fn switch(day: i8, part: i8, sample: bool) -> Result<i64> {
         (2, 2) => ans = solve_day2_2(input),
         (3, 1) => ans = solve_day3_1(input),
         (3, 2) => ans = solve_day3_2(input),
+        (4, 1) => ans = solve_day4_1(input),
+        (4, 2) => ans = solve_day4_2(input),
+        (5, 1) => ans = solve_day5_1(input),
+        (5, 2) => ans = solve_day5_2(input),
         (_, _) => {
             err.text = String::from("no such day or part");
             return Err(err);
