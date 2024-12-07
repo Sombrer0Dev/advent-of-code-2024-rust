@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 fn parse_input(input: String) -> Vec<Vec<char>> {
     let mut list = Vec::new();
 
@@ -7,7 +9,7 @@ fn parse_input(input: String) -> Vec<Vec<char>> {
     return list;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 enum Direction {
     South,
     North,
@@ -120,94 +122,82 @@ fn check_obstacle(x: i32, y: i32, dir: Direction, grid: Vec<Vec<char>>) -> bool 
     let mut m_x = x;
     let mut m_y = y;
     let mut t_dir = dir.clone();
-    let mut met = false;
+    let mut map = HashMap::new();
     'outer: loop {
         match t_dir {
             Direction::North => loop {
-                if m_y == 0 {
+                if m_y <= 0 {
                     break 'outer;
                 }
                 let t_y = m_y as usize;
                 let t_x = m_x as usize;
                 let face = grid[t_y - 1][t_x];
-                if face == 'O' {
-                    if met {
-                        println!("met_second");
-                        return true;
-                    }
+
+                if face == '#' || face == 'O' {
                     t_dir = rotate(t_dir);
-                    met = true;
                     break;
                 }
-                if face == '#' {
-                    t_dir = rotate(t_dir);
-                    break;
+                if map.contains_key(&(t_y, t_x, t_dir.clone())) {
+                    return true;
+                } else {
+                    map.insert((t_y, t_x, t_dir.clone()), true);
                 }
                 m_y -= 1;
             },
             Direction::South => loop {
-                if m_y + 1 == grid.len().try_into().unwrap() {
+                if m_y + 1 >= grid.len().try_into().unwrap() {
                     break 'outer;
                 }
                 let t_y = m_y as usize;
                 let t_x = m_x as usize;
                 let face = grid[t_y + 1][t_x];
-                if face == 'O' {
-                    if met {
-                        println!("met_second");
-                        return true;
-                    }
+
+                if face == '#' || face == 'O' {
                     t_dir = rotate(t_dir);
-                    met = true;
                     break;
                 }
-                if face == '#' {
-                    t_dir = rotate(t_dir);
-                    break;
+                if map.contains_key(&(t_y, t_x, t_dir.clone())) {
+                    return true;
+                } else {
+                    map.insert((t_y, t_x, t_dir.clone()), true);
                 }
                 m_y += 1;
             },
             Direction::West => loop {
-                if m_x == 0 {
+                if m_x <= 0 {
                     break 'outer;
                 }
                 let t_y = m_y as usize;
                 let t_x = m_x as usize;
                 let face = grid[t_y][t_x - 1];
-                if face == 'O' {
-                    if met {
-                        println!("met_second");
-                        return true;
-                    }
+
+                if face == '#' || face == 'O' {
                     t_dir = rotate(t_dir);
-                    met = true;
                     break;
                 }
-                if face == '#' {
-                    t_dir = rotate(t_dir);
-                    break;
+                if map.contains_key(&(t_y, t_x, t_dir.clone())) {
+                    return true;
+                } else {
+                    map.insert((t_y, t_x, t_dir.clone()), true);
                 }
                 m_x -= 1;
             },
             Direction::East => loop {
-                if m_x + 1 == grid[0].len().try_into().unwrap() {
+                if m_x + 1 >= grid[0].len().try_into().unwrap() {
                     break 'outer;
                 }
                 let t_y = m_y as usize;
                 let t_x = m_x as usize;
                 let face = grid[t_y][t_x + 1];
-                if face == 'O' {
-                    if met {
-                        println!("met_second");
-                        return true;
-                    }
+
+                if face == '#' || face == 'O' {
                     t_dir = rotate(t_dir);
-                    met = true;
                     break;
                 }
-                if face == '#' {
-                    t_dir = rotate(t_dir);
-                    break;
+                if map.contains_key(&(t_y, t_x, t_dir.clone())) {
+                    return true;
+                } else {
+                    map.insert((t_y, t_x, t_dir.clone()), true);
                 }
                 m_x += 1;
             },
@@ -220,131 +210,96 @@ fn move_guard_dir(x: &mut i32, y: &mut i32, grid: &mut Vec<Vec<char>>) -> i64 {
     let m_y = y.clone();
     let mut dir = Direction::North;
     let mut count = 0;
+    let mut placed = HashMap::new();
     'outer: loop {
         match dir {
             Direction::North => loop {
+                let t_y = *y as usize;
+                let t_x = *x as usize;
                 if *y == 0 {
                     break 'outer;
                 }
-                let t_y = *y as usize;
-                let t_x = *x as usize;
                 let face = grid[t_y - 1][t_x];
                 if face == '#' {
                     dir = rotate(dir);
                     break;
                 } else {
-                    println!("{t_y}, {t_x}");
-                    let t_char = grid[t_y - 1][t_x];
                     grid[t_y][t_x] = 'O';
-                    if check_obstacle(m_x, m_y, dir.clone(), grid.to_vec()) {
-                        count += 1;
-                        println!("{count}");
-                        for line in grid.into_iter() {
-                            for ch in line {
-                                print!("{ch}");
-                            }
-                            println!();
+                    if check_obstacle(m_x, m_y, Direction::North, grid.to_vec()) {
+                        if !placed.contains_key(&(t_y, t_x)) {
+                            placed.insert((t_y, t_x), true);
+                            count += 1;
                         }
                     }
-                    grid[t_y - 1][t_x] = t_char;
+                    grid[t_y][t_x] = '.';
                 }
                 *y -= 1;
-                if grid[t_y][t_x] != 'O' {
-                    grid[t_y][t_x] = 'X';
-                }
             },
             Direction::South => loop {
+                let t_y = *y as usize;
+                let t_x = *x as usize;
                 if *y + 1 == grid.len().try_into().unwrap() {
                     break 'outer;
                 }
-                let t_y = *y as usize;
-                let t_x = *x as usize;
                 let face = grid[t_y + 1][t_x];
                 if face == '#' {
                     dir = rotate(dir);
                     break;
                 } else {
-                    println!("{t_y}, {t_x}");
-                    let t_char = grid[t_y + 1][t_x];
                     grid[t_y][t_x] = 'O';
-                    if check_obstacle(m_x, m_y, dir.clone(), grid.to_vec()) {
-                        count += 1;
-                        println!("{count}");
-                        for line in grid.into_iter() {
-                            for ch in line {
-                                print!("{ch}");
-                            }
-                            println!();
+                    if check_obstacle(m_x, m_y, Direction::North, grid.to_vec()) {
+                        if !placed.contains_key(&(t_y, t_x)) {
+                            placed.insert((t_y, t_x), true);
+                            count += 1;
                         }
                     }
-                    grid[t_y + 1][t_x] = t_char;
+                    grid[t_y][t_x] = '.';
                 }
                 *y += 1;
-                if grid[t_y][t_x] != 'O' {
-                    grid[t_y][t_x] = 'X';
-                }
             },
             Direction::West => loop {
+                let t_y = *y as usize;
+                let t_x = *x as usize;
                 if *x == 0 {
                     break 'outer;
                 }
-                let t_y = *y as usize;
-                let t_x = *x as usize;
                 let face = grid[t_y][t_x - 1];
                 if face == '#' {
                     dir = rotate(dir);
                     break;
                 } else {
-                    println!("{t_y}, {t_x}");
-                    let t_char = grid[t_y][t_x - 1];
                     grid[t_y][t_x] = 'O';
-                    if check_obstacle(m_x, m_y, dir.clone(), grid.to_vec()) {
-                        count += 1;
-                        println!("{count}");
-                        for line in grid.into_iter() {
-                            for ch in line {
-                                print!("{ch}");
-                            }
-                            println!();
+                    if check_obstacle(m_x, m_y, Direction::North, grid.to_vec()) {
+                        if !placed.contains_key(&(t_y, t_x)) {
+                            placed.insert((t_y, t_x), true);
+                            count += 1;
                         }
                     }
-                    grid[t_y][t_x - 1] = t_char;
+                    grid[t_y][t_x] = '.';
                 }
                 *x -= 1;
-                if grid[t_y][t_x] != 'O' {
-                    grid[t_y][t_x] = 'X';
-                }
             },
             Direction::East => loop {
+                let t_y = *y as usize;
+                let t_x = *x as usize;
                 if *x + 1 == grid[0].len().try_into().unwrap() {
                     break 'outer;
                 }
-                let t_y = *y as usize;
-                let t_x = *x as usize;
                 let face = grid[t_y][t_x + 1];
                 if face == '#' {
                     dir = rotate(dir);
                     break;
                 } else {
-                    println!("{t_y}, {t_x}");
-                    let t_char = grid[t_y][t_x + 1];
                     grid[t_y][t_x] = 'O';
-                    if check_obstacle(m_x, m_y, dir.clone(), grid.to_vec()) {
-                        count += 1;
-                        println!("{count}");
-                        for line in grid.into_iter() {
-                            for ch in line {
-                                print!("{ch}");
-                            }
-                            println!();
+                    if check_obstacle(m_x, m_y, Direction::North, grid.to_vec()) {
+                        if !placed.contains_key(&(t_y, t_x)) {
+                            placed.insert((t_y, t_x), true);
+                            count += 1;
                         }
                     }
-                    grid[t_y][t_x + 1] = t_char;
+                    grid[t_y][t_x] = '.';
                 }
                 *x += 1;
-                if grid[t_y][t_x] != 'X' {
-                    grid[t_y][t_x] = 'X';
-                }
             },
         }
     }
@@ -368,11 +323,5 @@ pub fn solve_day6_2(input: String) -> i64 {
     let mut t_y = y;
 
     let ans = move_guard_dir(&mut t_x, &mut t_y, &mut input);
-    for line in input {
-        for ch in line {
-            print!("{ch}");
-        }
-        println!();
-    }
     return ans;
 }
